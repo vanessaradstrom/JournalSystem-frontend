@@ -1,8 +1,9 @@
+// src/pages/LoginPage.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 
-function LoginPage({ setUserRole, setToken }) {
+function LoginPage({ onLogin }) {
     const navigate = useNavigate();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -15,7 +16,7 @@ function LoginPage({ setUserRole, setToken }) {
         setLoading(true);
 
         try {
-            const response = await fetch("http://localhost:8080/api/auth/login", {
+            const response = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -29,14 +30,12 @@ function LoginPage({ setUserRole, setToken }) {
 
             const data = await response.json();
 
-            // Store token
-            localStorage.setItem("token", data.token);
+            onLogin({
+                token: data.token,
+                role: data.role,     // "ADMIN", "DOCTOR", ...
+                userId: data.userId,
+            });
 
-            // Set user role and token in state
-            setUserRole(data.role.toLowerCase());
-            setToken(data.token);
-
-            // Navigate based on role
             const roleRoute = {
                 admin: "/admin",
                 doctor: "/doctor",
@@ -92,10 +91,18 @@ function LoginPage({ setUserRole, setToken }) {
                 <div className="test-credentials">
                     <h3>Test Credentials:</h3>
                     <ul>
-                        <li><strong>Admin:</strong> admin / password123</li>
-                        <li><strong>Doctor:</strong> dr_smith / password123</li>
-                        <li><strong>Patient:</strong> patient_john / password123</li>
-                        <li><strong>Staff:</strong> nurse_jane / password123</li>
+                        <li>
+                            <strong>Admin:</strong> admin / password123
+                        </li>
+                        <li>
+                            <strong>Doctor:</strong> dr_smith / password123
+                        </li>
+                        <li>
+                            <strong>Patient:</strong> patient_john / password123
+                        </li>
+                        <li>
+                            <strong>Staff:</strong> nurse_jane / password123
+                        </li>
                     </ul>
                 </div>
             </div>
