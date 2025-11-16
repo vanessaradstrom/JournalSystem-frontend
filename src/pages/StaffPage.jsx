@@ -1,5 +1,8 @@
+// src/pages/StaffPage.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { patientService } from '../services/patientService';
+import { messageService } from '../services/messageService';
 import './StaffPage.css';
 
 function StaffPage({ token }) {
@@ -8,38 +11,22 @@ function StaffPage({ token }) {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        fetchPatients();
-        fetchUnreadMessages();
+        fetchData();
     }, [token]);
 
-    const fetchPatients = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:8080/api/patients', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await response.json();
-            setPatients(data);
+            const [patientsData, unreadData] = await Promise.all([
+                patientService.getAll(token),
+                messageService.getUnread(token)
+            ]);
+            setPatients(patientsData);
+            setUnreadMessages(unreadData.length);
         } catch (error) {
-            console.error('Error fetching patients:', error);
+            console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const fetchUnreadMessages = async () => {
-        try {
-            const response = await fetch('http://localhost:8080/api/messages/inbox/unread', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await response.json();
-            setUnreadMessages(data.length);
-        } catch (error) {
-            console.error('Error fetching unread messages:', error);
         }
     };
 

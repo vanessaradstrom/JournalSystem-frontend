@@ -1,203 +1,180 @@
-// src/pages/MessagesPage.jsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMessages } from "../hooks/useMessages";
+import { useMessageRecipients } from "../hooks/useMessageRecipients";
+import { formatDate, formatDateTime, getMessageDate } from "../utils/dateFormatter";
+import "../styles/forms.css";
+import "../styles/buttons.css";
 import "./MessagesPage.css";
 
 function MessagesPage({ token, role }) {
-    const [messages, setMessages] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [users, setUsers] = useState([]);
+    const {
+        inboxMessages,
+        sentMessages,
+        unreadCount,
+        error,
+        markAsRead,
+        sendMessage
+    } = useMessages(token);
+
+    const { recipients } = useMessageRecipients(token, role);
+
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [showCompose, setShowCompose] = useState(false);
+    const [activeTab, setActiveTab] = useState('inbox');
     const [newMessage, setNewMessage] = useState({
         receiverId: "",
         subject: "",
         content: "",
     });
-    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
 
-    useEffect(() => {
-        if (!token) return;
-        fetchMessages();
-        fetchRecipients();
-    }, [token, role]);
-
-    const apiGet = async (path) => {
-        const res = await fetch(`/api${path}`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error(`${res.status}`);
-        return res.json();
+    const showFeedback = (type, message) => {
+        setFeedback({ type, message });
+        setTimeout(() => setFeedback(null), 3000); // Auto-hide after 3 seconds
     };
 
-    const apiPost = async (path, body) => {
-        const res = await fetch(`/api${path}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(body),
-        });
-        if (!res.ok) throw new Error(`${res.status}`);
-        return res.json().catch(() => null);
-    };
-
-    const apiPut = async (path) => {
-        const res = await fetch(`/api${path}`, {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error(`${res.status}`);
-        return null;
-    };
-
-    const fetchMessages = async () => {
-        setLoading(true);
-        try {
-            const data = await apiGet("/messages/inbox");
-            setMessages(data);
-            setUnreadCount(data.filter((m) => !m.read).length);
-        } catch (e) {
-            console.error("messages", e);
-        } finally {
-            setLoading(false);
+    const getMessageDisplayName = (message, isInbox) => {
+        if (isInbox) {
+            return message.senderName || message.senderUsername || 'Unknown sender';
+        } else {
+            return message.receiverName || message.receiverUsername || 'Unknown recipient';
         }
     };
 
-    const fetchRecipients = async () => {
-        try {
-            if (role === "patient") {
-                const data = await apiGet("/practitioners");
-                setUsers(
-                    data
-                        .filter((p) => p.user?.id)
-                        .map((p) => ({
-                            id: p.user.id,
-                            label: `${p.firstName} ${p.lastName} (${p.type})`,
-                        }))
-                );
-            } else {
-                const data = await apiGet("/patients");
-                setUsers(
-                    data
-                        .filter((p) => p.user?.id)
-                        .map((p) => ({
-                            id: p.user.id,
-                            label: `${p.firstName} ${p.lastName} (patient)`,
-                        }))
-                );
-            }
-        } catch (e) {
-            console.error("recipients", e);
-        }
-    };
-
-    const markAsRead = async (messageId) => {
-        try {
-            await apiPut(`/messages/${messageId}/read`);
-            fetchMessages();
-        } catch (e) {
-            console.error("mark read", e);
-        }
-    };
-
-    const sendMessage = async (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
-        try {
-            await apiPost("/messages", newMessage);
+        setSending(true);
+
+        const result = await sendMessage(newMessage);
+
+        if (result.success) {
             setNewMessage({ receiverId: "", subject: "", content: "" });
             setShowCompose(false);
-            await fetchMessages();
-            alert("Message sent");
-        } catch (e) {
-            alert("Send failed");
+            showFeedback('success', 'Message sent successfully');
+        } else {
+            showFeedback('error', 'Failed to send message: ' + result.error);
         }
+
+        setSending(false);
     };
 
     const handleMessageSelect = (message) => {
         setSelectedMessage(message);
         setShowCompose(false);
-        if (!message.read) markAsRead(message.id);
+
+        if (activeTab === 'inbox' && !message.isRead) {
+            markAsRead(message.id);
+        }
     };
+
+    const handleCompose = () => {
+        setShowCompose(true);
+        setSelectedMessage(null);
+    };
+
+    const handleCancelCompose = () => {
+        setShowCompose(false);
+        setNewMessage({ receiverId: "", subject: "", content: "" });
+    };
+
+    const currentMessages = activeTab === 'inbox' ? inboxMessages : sentMessages;
 
     return (
         <div className="messages-page">
+            {error && (
+                <div className="error-banner" role="alert">
+                    {error}
+                </div>
+            )}
+
+            {feedback && (
+                <div className={`feedback-banner ${feedback.type}`} role="alert">
+                    {feedback.message}
+                </div>
+            )}
+
             <div className="messages-header">
                 <h1>Messages</h1>
-                <div className="messages-stats">
-                    <span className="unread-badge">{unreadCount} unread</span>
-                    <button className="btn-primary" onClick={() => setShowCompose(true)}>
-                        Compose New Message
-                    </button>
-                </div>
+                <button className="btn-primary" onClick={handleCompose}>
+                    + Compose New
+                </button>
+            </div>
+
+            <div className="messages-tabs">
+                <button
+                    className={activeTab === 'inbox' ? 'tab active' : 'tab'}
+                    onClick={() => {
+                        setActiveTab('inbox');
+                        setSelectedMessage(null);
+                        setShowCompose(false);
+                    }}
+                >
+                    Inbox ({unreadCount} unread)
+                </button>
+                <button
+                    className={activeTab === 'sent' ? 'tab active' : 'tab'}
+                    onClick={() => {
+                        setActiveTab('sent');
+                        setSelectedMessage(null);
+                        setShowCompose(false);
+                    }}
+                >
+                    Sent ({sentMessages.length})
+                </button>
             </div>
 
             <div className="messages-layout">
                 <div className="messages-sidebar">
-                    <h3>Inbox ({messages.length})</h3>
-                    {loading ? (
-                        <p>Loading messages...</p>
-                    ) : (
-                        <div className="messages-list">
-                            {messages.map((message) => (
+                    <h3>{activeTab === 'inbox' ? 'Inbox' : 'Sent Messages'}</h3>
+                    <div className="messages-list">
+                        {currentMessages.length === 0 ? (
+                            <p className="no-messages">
+                                {activeTab === 'sent' ?
+                                    'No sent messages' :
+                                    'No messages in inbox'}
+                            </p>
+                        ) : (
+                            currentMessages.map((msg) => (
                                 <div
-                                    key={message.id}
-                                    className={`message-item ${
-                                        selectedMessage?.id === message.id ? "selected" : ""
-                                    } ${!message.read ? "unread" : ""}`}
-                                    onClick={() => handleMessageSelect(message)}
+                                    key={msg.id}
+                                    className={`message-item ${!msg.isRead && activeTab === 'inbox' ? "unread" : ""} ${
+                                        selectedMessage?.id === msg.id ? "selected" : ""
+                                    }`}
+                                    onClick={() => handleMessageSelect(msg)}
                                 >
-                                    <div className="message-preview">
-                                        <strong>{message.senderUsername}</strong>
-                                        <span className="subject">{message.subject}</span>
-                                        <span className="date">
-                      {new Date(message.sentAt).toLocaleDateString()}
-                    </span>
+                                    <div className="message-sender">
+                                        {getMessageDisplayName(msg, activeTab === 'inbox')}
+                                        {!msg.isRead && activeTab === 'inbox' && <span className="unread-badge">New</span>}
                                     </div>
-                                    {!message.read && <div className="unread-dot"></div>}
+                                    <div className="message-subject">{msg.subject}</div>
+                                    <div className="message-date">
+                                        {formatDate(getMessageDate(msg))}
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            ))
+                        )}
+                    </div>
                 </div>
 
                 <div className="message-content">
-                    {selectedMessage ? (
-                        <div className="message-detail">
-                            <div className="message-header">
-                                <h2>{selectedMessage.subject}</h2>
-                                <div className="message-meta">
-                  <span>
-                    <strong>From:</strong> {selectedMessage.senderUsername}
-                  </span>
-                                    <span>
-                    <strong>To:</strong> {selectedMessage.receiverUsername}
-                  </span>
-                                    <span>
-                    <strong>Date:</strong>{" "}
-                                        {new Date(selectedMessage.sentAt).toLocaleString()}
-                  </span>
-                                </div>
-                            </div>
-                            <div className="message-body">
-                                <p>{selectedMessage.content}</p>
-                            </div>
-                        </div>
-                    ) : showCompose ? (
-                        <div className="compose-message">
+                    {showCompose ? (
+                        <div className="compose-form">
                             <h2>Compose New Message</h2>
-                            <form onSubmit={sendMessage} className="compose-form">
+                            <form onSubmit={handleSendMessage}>
                                 <div className="form-group">
-                                    <label>To:</label>
+                                    <label htmlFor="recipient">To:</label>
                                     <select
+                                        id="recipient"
                                         value={newMessage.receiverId}
                                         onChange={(e) =>
                                             setNewMessage({ ...newMessage, receiverId: e.target.value })
                                         }
                                         required
+                                        disabled={sending}
                                     >
                                         <option value="">Select recipient</option>
-                                        {users.map((u) => (
+                                        {recipients.map((u) => (
                                             <option key={u.id} value={u.id}>
                                                 {u.label}
                                             </option>
@@ -205,45 +182,69 @@ function MessagesPage({ token, role }) {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Subject:</label>
+                                    <label htmlFor="subject">Subject:</label>
                                     <input
+                                        id="subject"
                                         type="text"
                                         value={newMessage.subject}
                                         onChange={(e) =>
                                             setNewMessage({ ...newMessage, subject: e.target.value })
                                         }
                                         required
+                                        disabled={sending}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Message:</label>
+                                    <label htmlFor="content">Message:</label>
                                     <textarea
+                                        id="content"
                                         value={newMessage.content}
                                         onChange={(e) =>
                                             setNewMessage({ ...newMessage, content: e.target.value })
                                         }
-                                        rows={8}
+                                        rows="10"
                                         required
+                                        disabled={sending}
                                     />
                                 </div>
                                 <div className="form-actions">
-                                    <button type="submit" className="btn-primary">
-                                        Send Message
+                                    <button
+                                        type="submit"
+                                        className="btn-primary"
+                                        disabled={sending}
+                                    >
+                                        {sending ? 'Sending...' : 'Send Message'}
                                     </button>
                                     <button
                                         type="button"
                                         className="btn-secondary"
-                                        onClick={() => setShowCompose(false)}
+                                        onClick={handleCancelCompose}
+                                        disabled={sending}
                                     >
                                         Cancel
                                     </button>
                                 </div>
                             </form>
                         </div>
+                    ) : selectedMessage ? (
+                        <div className="message-detail">
+                            <h2>{selectedMessage.subject}</h2>
+                            <div className="message-meta">
+                                <p>
+                                    <strong>{activeTab === 'inbox' ? 'From' : 'To'}:</strong>{' '}
+                                    {getMessageDisplayName(selectedMessage, activeTab === 'inbox')}
+                                </p>
+                                <p>
+                                    <strong>Date:</strong>{" "}
+                                    {formatDateTime(getMessageDate(selectedMessage))}
+                                </p>
+                            </div>
+                            <div className="message-body">{selectedMessage.content}</div>
+                        </div>
                     ) : (
-                        <div className="no-message-selected">
-                            <h3>Select a message to read</h3>
-                            <p>Choose a message from your inbox or compose a new one.</p>
+                        <div className="no-selection">
+                            <h3>No message selected</h3>
+                            <p>Select a message from the {activeTab} or compose a new one</p>
                         </div>
                     )}
                 </div>

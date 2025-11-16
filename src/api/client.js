@@ -3,12 +3,10 @@ const API_BASE_URL = "/api";
 
 export async function apiFetch(path, options = {}, token) {
     const url = `${API_BASE_URL}${path}`;
-
     const headers = {
         ...(options.headers || {}),
     };
 
-    // Sätt JSON Content-Type om vi skickar JSON‑body
     if (options.body && !(options.body instanceof FormData)) {
         headers["Content-Type"] = "application/json";
     }
@@ -34,7 +32,6 @@ export async function apiFetch(path, options = {}, token) {
         );
     }
 
-    // 204 No Content
     if (response.status === 204) {
         return null;
     }

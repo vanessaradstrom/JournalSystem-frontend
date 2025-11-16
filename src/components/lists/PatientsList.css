@@ -1,0 +1,43 @@
+.patients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.patient-item {
+    padding: 1rem;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.patient-item:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.patient-item.selected {
+    background-color: #e3f2fd;
+    border-color: #3498db;
+}
+
+.patient-item strong {
+    color: #333;
+    font-size: 1rem;
+}
+
+.patient-item span {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.list-message {
+    color: #666;
+    text-align: center;
+    padding: 1rem;
+}

@@ -1,0 +1,203 @@
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group > input,
+.form-group > select,
+.form-group > textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: all 0.3s; /* ADDED */
+}
+
+.form-group > input:focus,
+.form-group > select:focus,
+.form-group > textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+.form-group > textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+}
+
+.form-actions button {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.condition-form,
+.encounter-form {
+    background-color: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e0e0e0;
+}
+
+.condition-form h4,
+.encounter-form h4 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.info-box {
+    background: #e3f2fd;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.info-box p {
+    margin: 0;
+    color: #1976d2;
+}
+
+/* Location Selector */
+.location-selector {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+/* CRITICAL FIX: Override width for location-selector children */
+.form-group .location-selector > * {
+    width: auto !important;
+}
+
+.location-selector select {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.location-selector select:hover:not(:disabled) {
+    border-color: #4CAF50;
+    background-color: #f9f9f9;
+}
+
+.location-selector select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+.location-selector select:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-new-location {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.3s;
+    flex: 0 0 auto !important;
+    width: auto !important;
+}
+
+.btn-new-location:hover {
+    background-color: #27ae60;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-new-location:active {
+    transform: translateY(0);
+}
+
+.new-location-form {
+    background-color: #f0f8ff;
+    padding: 1.5rem;
+    border: 2px solid #2ecc71;
+    border-radius: 8px;
+    margin: 1rem 0;
+    animation: slideDown 0.3s ease;
+}
+
+.new-location-form h5 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #2ecc71;
+}
+
+.btn-save-location {
+    background: #2ecc71;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    width: 100%;
+    margin-top: 0.5rem;
+    transition: all 0.3s;
+}
+
+.btn-save-location:hover {
+    background: #27ae60;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-save-location:active {
+    transform: scale(0.98);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

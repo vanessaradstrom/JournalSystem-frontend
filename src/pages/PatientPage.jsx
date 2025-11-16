@@ -1,92 +1,53 @@
-// src/pages/PatientPage.jsx
-import { useState, useEffect } from "react";
-import "./PatientPage.css";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { usePatientPortal } from '../hooks/usePatientPortal';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import StatusBadge from '../components/common/StatusBadge';
+import '../styles/cards.css';
+import './PatientPage.css';
 
-function PatientPage({ token }) {
-    const [patientData, setPatientData] = useState(null);
-    const [conditions, setConditions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState("overview");
-    const [error, setError] = useState(null);
+function PatientPage({ token, userId }) {
+    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState('overview');
 
-    useEffect(() => {
-        fetchPatientData();
-    }, [token]);
-
-    const fetchPatientData = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const patientResponse = await fetch("/api/patients/me", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-
-            if (!patientResponse.ok) {
-                const text = await patientResponse.text();
-                throw new Error(
-                    `Failed to fetch patient data: ${patientResponse.status} - ${text}`
-                );
-            }
-
-            const patient = await patientResponse.json();
-            setPatientData(patient);
-
-            if (patient.id) {
-                const conditionsResponse = await fetch(
-                    `/api/conditions/patient/${patient.id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-
-                if (conditionsResponse.ok) {
-                    const conditionsData = await conditionsResponse.json();
-                    setConditions(conditionsData);
-                }
-            }
-        } catch (err) {
-            console.error("Error fetching patient data:", err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const {
+        patient,
+        conditions,
+        encounters,
+        unreadMessages,
+        loading,
+        error,
+        activeConditionsCount,
+        recentConditions
+    } = usePatientPortal(token, userId);
 
     if (loading) {
-        return (
-            <div className="patient-page">
-                <div className="loading">Loading your health information...</div>
-            </div>
-        );
+        return <LoadingSpinner message="Loading your information..." />;
     }
 
     if (error) {
         return (
             <div className="patient-page">
-                <div className="error-message">
-                    <h2>Error loading patient data</h2>
+                <div className="error-message" role="alert">
+                    <h2>Error Loading Data</h2>
                     <p>{error}</p>
-                    <button onClick={fetchPatientData} className="btn-primary">
-                        Try Again
+                    <button onClick={() => navigate(-1)} className="btn-primary">
+                        Go Back
                     </button>
                 </div>
             </div>
         );
     }
 
-    if (!patientData) {
+    if (!patient) {
         return (
             <div className="patient-page">
                 <div className="error-message">
-                    <h2>No patient data found</h2>
-                    <p>Contact support if this problem persists.</p>
+                    <h2>Access Restricted</h2>
+                    <p>This page is only available for patients.</p>
+                    <button onClick={() => navigate(-1)} className="btn-primary">
+                        Go Back
+                    </button>
                 </div>
             </div>
         );
@@ -95,84 +56,107 @@ function PatientPage({ token }) {
     return (
         <div className="patient-page">
             <div className="patient-header">
-                <h1>My Health Information</h1>
-                <div className="patient-info-card">
-                    <h2>Personal Information</h2>
-                    <div className="info-grid">
-                        <div className="info-item">
-                            <label>Name:</label>
-                            <span>
-                {patientData.firstName} {patientData.lastName}
-              </span>
-                        </div>
-                        <div className="info-item">
-                            <label>Social Security Number:</label>
-                            <span>{patientData.socialSecurityNumber}</span>
-                        </div>
-                        <div className="info-item">
-                            <label>Date of Birth:</label>
-                            <span>
-                {new Date(patientData.dateOfBirth).toLocaleDateString()}
-              </span>
-                        </div>
-                        <div className="info-item">
-                            <label>Phone:</label>
-                            <span>{patientData.phoneNumber || "Not provided"}</span>
-                        </div>
-                        {patientData.address && (
-                            <div className="info-item">
-                                <label>Address:</label>
-                                <span>{patientData.address}</span>
-                            </div>
-                        )}
-                    </div>
+                <h1>Welcome, {patient.firstName} {patient.lastName}</h1>
+                <p>View your medical records and communicate with your healthcare team</p>
+            </div>
+
+            <div className="patient-stats">
+                <div className="stat-card">
+                    <h3>Active Conditions</h3>
+                    <p className="stat-number">{activeConditionsCount}</p>
                 </div>
+                <div className="stat-card">
+                    <h3>Total Encounters</h3>
+                    <p className="stat-number">{encounters.length}</p>
+                </div>
+                <div className="stat-card">
+                    <h3>Unread Messages</h3>
+                    <p className="stat-number">{unreadMessages}</p>
+                </div>
+            </div>
+
+            <div className="quick-actions">
+                <Link to="/messages" className="action-button">
+                    <span className="action-icon">✉️</span>
+                    <span>Messages</span>
+                    {unreadMessages > 0 && (
+                        <span className="notification-badge">{unreadMessages}</span>
+                    )}
+                </Link>
             </div>
 
             <div className="tabs">
                 <button
-                    className={activeTab === "overview" ? "tab active" : "tab"}
-                    onClick={() => setActiveTab("overview")}
+                    className={activeTab === 'overview' ? 'tab active' : 'tab'}
+                    onClick={() => setActiveTab('overview')}
+                    aria-selected={activeTab === 'overview'}
+                    role="tab"
                 >
                     Overview
                 </button>
                 <button
-                    className={activeTab === "conditions" ? "tab active" : "tab"}
-                    onClick={() => setActiveTab("conditions")}
+                    className={activeTab === 'conditions' ? 'tab active' : 'tab'}
+                    onClick={() => setActiveTab('conditions')}
+                    aria-selected={activeTab === 'conditions'}
+                    role="tab"
                 >
-                    Conditions ({conditions.length})
+                    Medical Conditions ({conditions.length})
+                </button>
+                <button
+                    className={activeTab === 'encounters' ? 'tab active' : 'tab'}
+                    onClick={() => setActiveTab('encounters')}
+                    aria-selected={activeTab === 'encounters'}
+                    role="tab"
+                >
+                    Encounters ({encounters.length})
                 </button>
             </div>
 
-            <div className="tab-content">
-                {activeTab === "overview" && (
-                    <div className="overview">
-                        <div className="stats-grid">
-                            <div className="stat-card">
-                                <h3>Active Conditions</h3>
-                                <p className="stat-number">
-                                    {conditions.filter((c) => c.status === "ACTIVE").length}
-                                </p>
-                            </div>
-                            <div className="stat-card">
-                                <h3>Total Conditions</h3>
-                                <p className="stat-number">{conditions.length}</p>
+            <div className="tab-content" role="tabpanel">
+                {activeTab === 'overview' && (
+                    <div className="overview-section">
+                        <div className="info-card">
+                            <h3>Personal Information</h3>
+                            <div className="info-grid">
+                                <div className="info-item">
+                                    <strong>Date of Birth:</strong>
+                                    <span>{new Date(patient.dateOfBirth).toLocaleDateString('sv-SE')}</span>
+                                </div>
+                                <div className="info-item">
+                                    <strong>SSN:</strong>
+                                    <span>{patient.socialSecurityNumber}</span>
+                                </div>
+                                <div className="info-item">
+                                    <strong>Phone:</strong>
+                                    <span>{patient.phoneNumber || 'Not provided'}</span>
+                                </div>
+                                <div className="info-item">
+                                    <strong>Address:</strong>
+                                    <span>{patient.address || 'Not provided'}</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="recent-conditions">
-                            <h3>My Conditions</h3>
-                            {conditions.length === 0 ? (
-                                <div className="no-data">
-                                    <p>No medical conditions recorded yet.</p>
-                                </div>
+                        <div className="recent-section">
+                            <h3>Recent Medical Conditions</h3>
+                            {recentConditions.length === 0 ? (
+                                <p className="no-data">No medical conditions recorded</p>
                             ) : (
-                                conditions.slice(0, 5).map((condition) => (
-                                    <div key={condition.id} className="condition-item">
-                                        <strong>{condition.diagnosis}</strong>
-                                        <span className={`status ${condition.status.toLowerCase()}`}>
-                      {condition.status}
-                    </span>
+                                recentConditions.map(condition => (
+                                    <div key={condition.id} className="card">
+                                        <div className="card-header">
+                                            <h4>{condition.diagnosis}</h4>
+                                            <StatusBadge status={condition.status} />
+                                        </div>
+                                        {condition.description && (
+                                            <p className="card-description">{condition.description}</p>
+                                        )}
+                                        <div className="card-meta">
+                                            <span>Severity: {condition.severity || 'Not specified'}</span>
+                                            <span>
+                                                Diagnosed: {new Date(condition.diagnosisDate).toLocaleDateString('sv-SE')}
+                                            </span>
+                                        </div>
                                     </div>
                                 ))
                             )}
@@ -180,45 +164,71 @@ function PatientPage({ token }) {
                     </div>
                 )}
 
-                {activeTab === "conditions" && (
-                    <div className="conditions-list">
-                        <h3>Medical Conditions</h3>
+                {activeTab === 'conditions' && (
+                    <div className="conditions-section">
+                        <h2>Medical Conditions</h2>
                         {conditions.length === 0 ? (
-                            <div className="no-data">
-                                <p>No medical conditions recorded.</p>
-                            </div>
+                            <p className="no-data">No medical conditions recorded</p>
                         ) : (
-                            conditions.map((condition) => (
-                                <div key={condition.id} className="condition-card">
-                                    <div className="condition-header">
-                                        <h4>{condition.diagnosis}</h4>
-                                        <span
-                                            className={`status-badge ${condition.status.toLowerCase()}`}
-                                        >
-                      {condition.status}
-                    </span>
-                                    </div>
-                                    {condition.description && (
-                                        <p className="condition-description">
-                                            {condition.description}
-                                        </p>
-                                    )}
-                                    {condition.severity && (
-                                        <p className="condition-severity">
-                                            <strong>Severity:</strong> {condition.severity}
-                                        </p>
-                                    )}
-                                    <div className="condition-footer">
-                    <span>
-                      Diagnosed:{" "}
-                        {new Date(condition.diagnosisDate).toLocaleDateString()}
-                    </span>
-                                        {condition.diagnosedByName && (
-                                            <span>By: {condition.diagnosedByName}</span>
+                            <div className="conditions-list">
+                                {conditions.map(condition => (
+                                    <div key={condition.id} className="card">
+                                        <div className="card-header">
+                                            <h4>{condition.diagnosis}</h4>
+                                            <StatusBadge status={condition.status} />
+                                        </div>
+                                        {condition.description && (
+                                            <p className="card-description">{condition.description}</p>
                                         )}
+                                        <div className="card-meta">
+                                            <span>Severity: {condition.severity || 'Not specified'}</span>
+                                            <span>
+                                                Diagnosed: {new Date(condition.diagnosisDate).toLocaleDateString('sv-SE')}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'encounters' && (
+                    <div className="encounters-section">
+                        <h2>Medical Encounters</h2>
+                        {encounters.length === 0 ? (
+                            <p className="no-data">No encounters recorded</p>
+                        ) : (
+                            <div className="encounters-list">
+                                {encounters.map(encounter => (
+                                    <div key={encounter.id} className="card">
+                                        <div className="card-header">
+                                            <h4>{encounter.type.replace('_', ' ')}</h4>
+                                            <span className="date-badge">
+                                                {new Date(encounter.encounterDate).toLocaleDateString('sv-SE')}
+                                            </span>
+                                        </div>
+                                        <div className="encounter-details">
+                                            <p>
+                                                <strong>Practitioner:</strong> {encounter.practitionerName}
+                                            </p>
+                                            <p>
+                                                <strong>Reason:</strong> {encounter.reasonForVisit}
+                                            </p>
+                                            {encounter.notes && (
+                                                <p>
+                                                    <strong>Notes:</strong> {encounter.notes}
+                                                </p>
+                                            )}
+                                            {encounter.location && (
+                                                <p>
+                                                    <strong>Location:</strong> {encounter.location.name}, {encounter.location.city}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 )}
