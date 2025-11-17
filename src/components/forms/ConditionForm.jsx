@@ -1,6 +1,4 @@
-// src/components/forms/ConditionForm.jsx
 import { useState } from 'react';
-import '../../styles/forms.css';
 
 function ConditionForm({ patientId, onSubmit, onCancel }) {
     const [formData, setFormData] = useState({

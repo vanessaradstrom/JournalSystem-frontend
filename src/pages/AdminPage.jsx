@@ -1,55 +1,38 @@
 // src/pages/AdminPage.jsx
-import { useState, useEffect } from "react";
-import { userService } from "../services/userService";
-import { patientService } from "../services/patientService";
-import { practitionerService } from "../services/practitionerService";
-import { organizationService } from "../services/organizationService";
-import LoadingSpinner from "../components/common/LoadingSpinner";
-import "../styles/forms.css";
-import "../styles/badges.css";
-import "../styles/buttons.css";
-import "./AdminPage.css";
+import { useState, useEffect } from 'react';
+import { userService } from '../services/userService';
+import { patientService } from '../services/patientService';
+import { practitionerService } from '../services/practitionerService';
+import { organizationService } from '../services/organizationService';
+import AdminTabs from '../components/admin/AdminTabs';
+import UserCreationForm from '../components/admin/UserCreationForm';
+import './AdminPage.css';
 
 function AdminPage({ token }) {
     const [users, setUsers] = useState([]);
     const [organizations, setOrganizations] = useState([]);
     const [practitioners, setPractitioners] = useState([]);
-    const [activeTab, setActiveTab] = useState("users");
+    const [activeTab, setActiveTab] = useState('users');
     const [loading, setLoading] = useState(false);
 
-    const [newUser, setNewUser] = useState({
-        username: "",
-        password: "",
-        role: "PATIENT",
-    });
-
+    const [newUser, setNewUser] = useState({ username: '', password: '', role: 'PATIENT' });
     const [newPatient, setNewPatient] = useState({
-        firstName: "",
-        lastName: "",
-        socialSecurityNumber: "",
-        dateOfBirth: "",
-        phoneNumber: "",
-        address: "",
-        userId: "",
+        firstName: '', lastName: '', socialSecurityNumber: '',
+        dateOfBirth: '', phoneNumber: '', address: '', userId: ''
     });
-
     const [newPractitioner, setNewPractitioner] = useState({
-        firstName: "",
-        lastName: "",
-        type: "DOCTOR",
-        licenseNumber: "",
-        userId: "",
-        organizationId: "",
+        firstName: '', lastName: '', type: 'DOCTOR',
+        licenseNumber: '', userId: '', organizationId: ''
+    });
+    const [newOrganization, setNewOrganization] = useState({
+        name: '', type: 'HOSPITAL', address: '',
+        city: '', postalCode: '', country: 'Sweden'
     });
 
     useEffect(() => {
-        if (activeTab === "users") {
-            fetchUsers();
-        } else if (activeTab === "organizations") {
-            fetchOrganizations();
-        } else if (activeTab === "practitioners") {
-            fetchPractitioners();
-        }
+        if (activeTab === 'users') fetchUsers();
+        else if (activeTab === 'organizations') fetchOrganizations();
+        else if (activeTab === 'practitioners') fetchPractitioners();
     }, [activeTab, token]);
 
     const fetchUsers = async () => {
@@ -57,7 +40,7 @@ function AdminPage({ token }) {
             const data = await userService.getAll(token);
             setUsers(data);
         } catch (err) {
-            console.error("Error fetching users:", err);
+            console.error('Error fetching users:', err);
         }
     };
 
@@ -66,7 +49,7 @@ function AdminPage({ token }) {
             const data = await organizationService.getAll(token);
             setOrganizations(data);
         } catch (err) {
-            console.error("Error fetching organizations:", err);
+            console.error('Error fetching organizations:', err);
         }
     };
 
@@ -75,20 +58,19 @@ function AdminPage({ token }) {
             const data = await practitionerService.getAll(token);
             setPractitioners(data);
         } catch (err) {
-            console.error("Error fetching practitioners:", err);
+            console.error('Error fetching practitioners:', err);
         }
     };
 
-    const handleCreateUser = async (e) => {
-        e.preventDefault();
+    const handleCreateUser = async (userData) => {
         setLoading(true);
         try {
-            await userService.create(newUser, token);
-            setNewUser({ username: "", password: "", role: "PATIENT" });
+            await userService.create(userData, token);
+            setNewUser({ username: '', password: '', role: 'PATIENT' });
             await fetchUsers();
-            alert("User created successfully!");
+            alert('User created successfully!');
         } catch (err) {
-            alert(`Create user failed: ${err.message}`);
+            alert('Create user failed: ' + err.message);
         } finally {
             setLoading(false);
         }
@@ -100,17 +82,12 @@ function AdminPage({ token }) {
         try {
             await patientService.create(newPatient, token);
             setNewPatient({
-                firstName: "",
-                lastName: "",
-                socialSecurityNumber: "",
-                dateOfBirth: "",
-                phoneNumber: "",
-                address: "",
-                userId: "",
+                firstName: '', lastName: '', socialSecurityNumber: '',
+                dateOfBirth: '', phoneNumber: '', address: '', userId: ''
             });
-            alert("Patient created successfully!");
+            alert('Patient created successfully!');
         } catch (err) {
-            alert(`Create patient failed: ${err.message}`);
+            alert('Create patient failed: ' + err.message);
         } finally {
             setLoading(false);
         }
@@ -122,17 +99,31 @@ function AdminPage({ token }) {
         try {
             await practitionerService.create(newPractitioner, token);
             setNewPractitioner({
-                firstName: "",
-                lastName: "",
-                type: "DOCTOR",
-                licenseNumber: "",
-                userId: "",
-                organizationId: "",
+                firstName: '', lastName: '', type: 'DOCTOR',
+                licenseNumber: '', userId: '', organizationId: ''
             });
             await fetchPractitioners();
-            alert("Practitioner created successfully!");
+            alert('Practitioner created successfully!');
         } catch (err) {
-            alert(`Create practitioner failed: ${err.message}`);
+            alert('Create practitioner failed: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateOrganization = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await organizationService.create(newOrganization, token);
+            setNewOrganization({
+                name: '', type: 'HOSPITAL', address: '',
+                city: '', postalCode: '', country: 'Sweden'
+            });
+            await fetchOrganizations();
+            alert('Organization created successfully!');
+        } catch (err) {
+            alert('Create organization failed: ' + err.message);
         } finally {
             setLoading(false);
         }
@@ -142,68 +133,19 @@ function AdminPage({ token }) {
         <div className="admin-page">
             <h1>Admin Dashboard</h1>
 
-            <div className="tabs">
-                <button
-                    className={activeTab === "users" ? "tab active" : "tab"}
-                    onClick={() => setActiveTab("users")}
-                >
-                    Users
-                </button>
-                <button
-                    className={activeTab === "organizations" ? "tab active" : "tab"}
-                    onClick={() => setActiveTab("organizations")}
-                >
-                    Organizations
-                </button>
-                <button
-                    className={activeTab === "practitioners" ? "tab active" : "tab"}
-                    onClick={() => setActiveTab("practitioners")}
-                >
-                    Practitioners
-                </button>
-            </div>
+            <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-            {activeTab === "users" && (
+            {activeTab === 'users' && (
                 <div className="tab-content">
-                    <h2>Create User</h2>
-                    <form onSubmit={handleCreateUser}>
-                        <div className="form-group">
-                            <label>Username:</label>
-                            <input
-                                type="text"
-                                value={newUser.username}
-                                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Password:</label>
-                            <input
-                                type="password"
-                                value={newUser.password}
-                                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Role:</label>
-                            <select
-                                value={newUser.role}
-                                onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                            >
-                                <option value="PATIENT">Patient</option>
-                                <option value="DOCTOR">Doctor</option>
-                                <option value="STAFF">Staff</option>
-                                <option value="ADMIN">Admin</option>
-                            </select>
-                        </div>
-                        <button type="submit" className="btn-primary" disabled={loading}>
-                            {loading ? "Creating..." : "Create User"}
-                        </button>
-                    </form>
+                    <UserCreationForm
+                        onSubmit={handleCreateUser}
+                        loading={loading}
+                        userData={newUser}
+                        onUserDataChange={setNewUser}
+                    />
 
                     <h2>All Users</h2>
-                    <table className="data-table">
+                    <table className="admin-table">
                         <thead>
                         <tr>
                             <th>ID</th>
@@ -230,7 +172,7 @@ function AdminPage({ token }) {
                     <form onSubmit={handleCreatePatient}>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>First Name:</label>
+                                <label>First Name</label>
                                 <input
                                     type="text"
                                     value={newPatient.firstName}
@@ -239,7 +181,7 @@ function AdminPage({ token }) {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Last Name:</label>
+                                <label>Last Name</label>
                                 <input
                                     type="text"
                                     value={newPatient.lastName}
@@ -249,7 +191,7 @@ function AdminPage({ token }) {
                             </div>
                         </div>
                         <div className="form-group">
-                            <label>Social Security Number:</label>
+                            <label>Social Security Number</label>
                             <input
                                 type="text"
                                 value={newPatient.socialSecurityNumber}
@@ -258,7 +200,7 @@ function AdminPage({ token }) {
                             />
                         </div>
                         <div className="form-group">
-                            <label>Date of Birth:</label>
+                            <label>Date of Birth</label>
                             <input
                                 type="date"
                                 value={newPatient.dateOfBirth}
@@ -267,7 +209,7 @@ function AdminPage({ token }) {
                             />
                         </div>
                         <div className="form-group">
-                            <label>Phone Number:</label>
+                            <label>Phone Number</label>
                             <input
                                 type="text"
                                 value={newPatient.phoneNumber}
@@ -275,7 +217,7 @@ function AdminPage({ token }) {
                             />
                         </div>
                         <div className="form-group">
-                            <label>Address:</label>
+                            <label>Address</label>
                             <input
                                 type="text"
                                 value={newPatient.address}
@@ -283,7 +225,7 @@ function AdminPage({ token }) {
                             />
                         </div>
                         <div className="form-group">
-                            <label>User ID:</label>
+                            <label>User ID</label>
                             <input
                                 type="number"
                                 value={newPatient.userId}
@@ -292,24 +234,85 @@ function AdminPage({ token }) {
                             />
                         </div>
                         <button type="submit" className="btn-primary" disabled={loading}>
-                            {loading ? "Creating..." : "Create Patient"}
+                            {loading ? 'Creating...' : 'Create Patient'}
                         </button>
                     </form>
                 </div>
             )}
 
-            {activeTab === "organizations" && (
+            {activeTab === 'organizations' && (
                 <div className="tab-content">
-                    <h2>Organizations</h2>
-                    {organizations.length === 0 ? (
-                        <p>No organizations found.</p>
-                    ) : (
-                        <table className="data-table">
+                    <h2>Create Organization</h2>
+                    <form onSubmit={handleCreateOrganization} className="admin-form">
+                        <div className="form-group">
+                            <label>Name</label>
+                            <input
+                                type="text"
+                                value={newOrganization.name}
+                                onChange={(e) => setNewOrganization({ ...newOrganization, name: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Type</label>
+                            <select
+                                value={newOrganization.type}
+                                onChange={(e) => setNewOrganization({ ...newOrganization, type: e.target.value })}
+                            >
+                                <option value="HOSPITAL">Hospital</option>
+                                <option value="CLINIC">Clinic</option>
+                                <option value="LABORATORY">Laboratory</option>
+                                <option value="PHARMACY">Pharmacy</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>Address</label>
+                            <input
+                                type="text"
+                                value={newOrganization.address}
+                                onChange={(e) => setNewOrganization({ ...newOrganization, address: e.target.value })}
+                            />
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>City</label>
+                                <input
+                                    type="text"
+                                    value={newOrganization.city}
+                                    onChange={(e) => setNewOrganization({ ...newOrganization, city: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Postal Code</label>
+                                <input
+                                    type="text"
+                                    value={newOrganization.postalCode}
+                                    onChange={(e) => setNewOrganization({ ...newOrganization, postalCode: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label>Country</label>
+                            <input
+                                type="text"
+                                value={newOrganization.country}
+                                onChange={(e) => setNewOrganization({ ...newOrganization, country: e.target.value })}
+                            />
+                        </div>
+                        <button type="submit" className="btn-primary" disabled={loading}>
+                            {loading ? 'Creating...' : 'Create Organization'}
+                        </button>
+                    </form>
+
+                    <h2>All Organizations</h2>
+                    <div className="table-container">
+                        <table className="admin-table">
                             <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Type</th>
+                                <th>City</th>
                                 <th>Address</th>
                             </tr>
                             </thead>
@@ -319,22 +322,23 @@ function AdminPage({ token }) {
                                     <td>{org.id}</td>
                                     <td>{org.name}</td>
                                     <td>{org.type}</td>
-                                    <td>{org.address || "N/A"}</td>
+                                    <td>{org.city}</td>
+                                    <td>{org.address || 'N/A'}</td>
                                 </tr>
                             ))}
                             </tbody>
                         </table>
-                    )}
+                    </div>
                 </div>
             )}
 
-            {activeTab === "practitioners" && (
+            {activeTab === 'practitioners' && (
                 <div className="tab-content">
                     <h2>Create Practitioner</h2>
                     <form onSubmit={handleCreatePractitioner}>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>First Name:</label>
+                                <label>First Name</label>
                                 <input
                                     type="text"
                                     value={newPractitioner.firstName}
@@ -343,7 +347,7 @@ function AdminPage({ token }) {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Last Name:</label>
+                                <label>Last Name</label>
                                 <input
                                     type="text"
                                     value={newPractitioner.lastName}
@@ -353,7 +357,7 @@ function AdminPage({ token }) {
                             </div>
                         </div>
                         <div className="form-group">
-                            <label>Type:</label>
+                            <label>Type</label>
                             <select
                                 value={newPractitioner.type}
                                 onChange={(e) => setNewPractitioner({ ...newPractitioner, type: e.target.value })}
@@ -364,7 +368,7 @@ function AdminPage({ token }) {
                             </select>
                         </div>
                         <div className="form-group">
-                            <label>License Number:</label>
+                            <label>License Number</label>
                             <input
                                 type="text"
                                 value={newPractitioner.licenseNumber}
@@ -373,7 +377,7 @@ function AdminPage({ token }) {
                             />
                         </div>
                         <div className="form-group">
-                            <label>User ID:</label>
+                            <label>User ID</label>
                             <input
                                 type="number"
                                 value={newPractitioner.userId}
@@ -382,26 +386,33 @@ function AdminPage({ token }) {
                             />
                         </div>
                         <div className="form-group">
-                            <label>Organization ID (optional):</label>
-                            <input
-                                type="number"
+                            <label>Organization</label>
+                            <select
                                 value={newPractitioner.organizationId}
                                 onChange={(e) => setNewPractitioner({ ...newPractitioner, organizationId: e.target.value })}
-                            />
+                            >
+                                <option value="">Select Organization (optional)</option>
+                                {organizations.map((org) => (
+                                    <option key={org.id} value={org.id}>
+                                        {org.name} - {org.city}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <button type="submit" className="btn-primary" disabled={loading}>
-                            {loading ? "Creating..." : "Create Practitioner"}
+                            {loading ? 'Creating...' : 'Create Practitioner'}
                         </button>
                     </form>
 
                     <h2>All Practitioners</h2>
-                    <table className="data-table">
+                    <table className="admin-table">
                         <thead>
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
                             <th>Type</th>
                             <th>License</th>
+                            <th>Organization</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -410,11 +421,10 @@ function AdminPage({ token }) {
                                 <td>{p.id}</td>
                                 <td>{p.firstName} {p.lastName}</td>
                                 <td>
-                                        <span className="type-badge">
-                                            {p.type}
-                                        </span>
+                                    <span className="type-badge">{p.type}</span>
                                 </td>
                                 <td>{p.licenseNumber}</td>
+                                <td>{p.organizationName || 'N/A'}</td>
                             </tr>
                         ))}
                         </tbody>

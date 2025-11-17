@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { usePatientPortal } from '../hooks/usePatientPortal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import StatusBadge from '../components/common/StatusBadge';
-import '../styles/cards.css';
 import './PatientPage.css';
 
 function PatientPage({ token, userId }) {

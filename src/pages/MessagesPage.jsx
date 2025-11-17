@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useMessages } from "../hooks/useMessages";
 import { useMessageRecipients } from "../hooks/useMessageRecipients";
 import { formatDate, formatDateTime, getMessageDate } from "../utils/dateFormatter";
-import "../styles/forms.css";
-import "../styles/buttons.css";
 import "./MessagesPage.css";
 
 function MessagesPage({ token, role }) {

@@ -1,5 +1,3 @@
-// src/components/common/StatusBadge.jsx
-import '../../styles/badges.css';
 
 function StatusBadge({ status, type = 'status' }) {
     const className = `${type}-badge ${status.toLowerCase().replace('_', '-')}`;

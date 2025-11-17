@@ -1,5 +1,3 @@
-// src/components/lists/PatientsList.jsx
-import './PatientsList.css';
 
 function PatientsList({ patients, selectedPatient, onPatientSelect, loading }) {
     if (loading) {

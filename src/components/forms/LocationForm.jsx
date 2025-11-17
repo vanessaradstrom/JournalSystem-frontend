@@ -1,7 +1,6 @@
-// src/components/forms/LocationForm.jsx
 import { useState } from 'react';
 import { apiFetch } from '../../api/client';
-import '../../styles/forms.css';
+
 
 function LocationForm({ onSubmit, onCancel, token }) {
     const [formData, setFormData] = useState({

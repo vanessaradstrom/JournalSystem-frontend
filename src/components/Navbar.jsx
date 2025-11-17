@@ -12,7 +12,7 @@ function Navbar({ userRole, onLogout }) {
             </div>
 
             <div className="navbar-links">
-                {(userRole === 'doctor' || userRole === 'admin') && (
+                {userRole === 'doctor' && (
                     <Link to="/doctor" className="nav-link">
                         Doctor Dashboard
                     </Link>
@@ -30,7 +30,8 @@ function Navbar({ userRole, onLogout }) {
                     </Link>
                 )}
 
-                {(userRole === 'doctor' || userRole === 'staff' || userRole === 'admin') && (
+                {/* Patient Management - ONLY for doctor and admin */}
+                {(userRole === 'doctor' || userRole === 'admin') && (
                     <Link to="/patients" className="nav-link">
                         Patient Management
                     </Link>

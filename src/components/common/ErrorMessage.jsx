@@ -1,4 +1,3 @@
-import './ErrorMessage.css';
 
 function ErrorMessage({ message, onRetry }) {
     return (

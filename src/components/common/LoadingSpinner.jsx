@@ -1,4 +1,3 @@
-import './LoadingSpinner.css';
 
 function LoadingSpinner({ message = "Loading..." }) {
     return (

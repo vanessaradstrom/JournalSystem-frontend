@@ -1,7 +1,6 @@
-// src/components/forms/EncounterForm.jsx
 import { useState } from 'react';
 import LocationForm from './LocationForm';
-import '../../styles/forms.css';
+
 
 function EncounterForm({
                            patientId,

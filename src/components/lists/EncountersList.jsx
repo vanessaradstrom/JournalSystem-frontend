@@ -1,5 +1,3 @@
-// src/components/lists/EncountersList.jsx
-import '../../styles/cards.css';
 
 function EncountersList({ encounters }) {
     if (encounters.length === 0) {

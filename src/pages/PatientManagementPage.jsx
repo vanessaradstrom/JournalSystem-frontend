@@ -27,9 +27,7 @@ function PatientManagementPage({ token }) {
         }
     };
 
-    if (loading) {
-        return <LoadingSpinner message="Loading patients..." />;
-    }
+    if (loading) return <LoadingSpinner message="Loading patients..." />;
 
     if (error) {
         return (
@@ -61,22 +59,21 @@ function PatientManagementPage({ token }) {
                         <th>Date of Birth</th>
                         <th>Phone</th>
                         <th>Address</th>
-                        <th>Username</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {patients.map(p => (
+                    {patients.map((p) => (
                         <tr key={p.id}>
                             <td><strong>{p.firstName} {p.lastName}</strong></td>
                             <td>{p.socialSecurityNumber}</td>
                             <td>{new Date(p.dateOfBirth).toLocaleDateString()}</td>
                             <td>{p.phoneNumber || 'N/A'}</td>
                             <td>{p.address || 'N/A'}</td>
-                            <td>{p.user?.username || 'N/A'}</td>
                         </tr>
                     ))}
                     </tbody>
                 </table>
+
                 {patients.length === 0 && (
                     <div className="no-data">
                         <p>No patients found.</p>
